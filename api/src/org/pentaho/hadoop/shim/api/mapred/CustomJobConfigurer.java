@@ -20,24 +20,15 @@
  *
  ******************************************************************************/
 
-package org.pentaho.hadoop.shim.common;
+package org.pentaho.hadoop.shim.api.mapred;
 
-import org.pentaho.hadoop.shim.api.Configuration;
-import org.pentaho.hadoop.shim.api.fs.FileSystem;
-import org.pentaho.hadoop.shim.api.fs.Path;
+public interface CustomJobConfigurer {
 
-public class ShimUtils {
-
-  public static org.apache.hadoop.fs.FileSystem asFileSystem( FileSystem fs ) {
-    return fs == null ? null : (org.apache.hadoop.fs.FileSystem) fs.getDelegate();
-  }
-
-  @SuppressWarnings( "deprecation" )
-  public static org.apache.hadoop.mapred.JobConf asConfiguration( Configuration c ) {
-    return (org.apache.hadoop.mapred.JobConf) c;
-  }
-
-  public static org.apache.hadoop.fs.Path asPath( Path path ) {
-    return (org.apache.hadoop.fs.Path) path;
-  }
+  /**
+   * Perform additional configuration (beyond what PMR does)
+   * 
+   * @param job the JobConf or Job object to configure
+   * @throws Exception if a problem occurs
+   */
+  public void configure(Object job) throws Exception;
 }

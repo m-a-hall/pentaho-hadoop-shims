@@ -38,9 +38,9 @@ import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.util.VersionInfo;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.i18n.BaseMessages;
-import org.pentaho.hadoop.mapreduce.GenericTransCombiner;
-import org.pentaho.hadoop.mapreduce.GenericTransReduce;
-import org.pentaho.hadoop.mapreduce.PentahoMapRunnable;
+import org.pentaho.hadoop.mapreduce.PentahoMapreduceGenericTransCombiner;
+import org.pentaho.hadoop.mapreduce.PentahoMapreduceGenericTransMapper;
+import org.pentaho.hadoop.mapreduce.PentahoMapreduceGenericTransReducer;
 import org.pentaho.hadoop.mapreduce.converter.TypeConverterFactory;
 import org.pentaho.hadoop.shim.ConfigurationException;
 import org.pentaho.hadoop.shim.HadoopConfiguration;
@@ -49,8 +49,10 @@ import org.pentaho.hadoop.shim.ShimVersion;
 import org.pentaho.hadoop.shim.api.Configuration;
 import org.pentaho.hadoop.shim.api.DistributedCacheUtil;
 import org.pentaho.hadoop.shim.api.fs.FileSystem;
+import org.pentaho.hadoop.shim.api.mapred.CustomJobConfigurer;
 import org.pentaho.hadoop.shim.api.mapred.RunningJob;
 import org.pentaho.hadoop.shim.common.fs.FileSystemProxy;
+import org.pentaho.hadoop.shim.common.mapred.MapreduceJobExecutionProxy;
 import org.pentaho.hadoop.shim.common.mapred.RunningJobProxy;
 import org.pentaho.hadoop.shim.spi.HadoopShim;
 import org.pentaho.hdfs.vfs.HDFSFileProvider;
@@ -116,7 +118,8 @@ public class CommonHadoopShim implements HadoopShim {
     ClassLoader cl = Thread.currentThread().getContextClassLoader();
     Thread.currentThread().setContextClassLoader( getClass().getClassLoader() );
     try {
-      return new org.pentaho.hadoop.shim.common.ConfigurationProxy();
+      // return new org.pentaho.hadoop.shim.common.ConfigurationProxy();
+      return new org.pentaho.hadoop.shim.common.MapreduceJobProxy();
     } finally {
       Thread.currentThread().setContextClassLoader( cl );
     }
@@ -227,9 +230,37 @@ public class CommonHadoopShim implements HadoopShim {
     ClassLoader cl = Thread.currentThread().getContextClassLoader();
     Thread.currentThread().setContextClassLoader( getClass().getClassLoader() );
     try {
-      JobConf conf = ShimUtils.asConfiguration( c );
-      JobClient jobClient = new JobClient( conf );
-      return new RunningJobProxy( jobClient.submitJob( conf ) );
+      Object underlying = c.getUnderlyingJobObject();
+
+      // any custom configurers?
+      String customConfigClass = c.get( "pentaho.custom.job.configurer" );
+      if ( customConfigClass != null && customConfigClass.length() > 0 ) {
+        try {
+          Class<?> confC = Class.forName( customConfigClass );
+          CustomJobConfigurer configurer = (CustomJobConfigurer) confC.newInstance();
+          configurer.configure( underlying );
+        } catch ( Exception e ) {
+          throw new IOException( e );
+        }
+      }
+
+      if ( underlying instanceof org.apache.hadoop.mapreduce.Job ) {
+        try {
+          ( (org.apache.hadoop.mapreduce.Job) underlying ).submit();
+          MapreduceJobExecutionProxy proxy =
+              new MapreduceJobExecutionProxy( (org.apache.hadoop.mapreduce.Job) underlying );
+
+          return proxy;
+        } catch ( ClassNotFoundException e ) {
+          throw new IOException( e );
+        } catch ( InterruptedException e ) {
+          throw new IOException( e );
+        }
+      } else {
+        JobConf conf = ShimUtils.asConfiguration( c );
+        JobClient jobClient = new JobClient( conf );
+        return new RunningJobProxy( jobClient.submitJob( conf ) );
+      }
     } finally {
       Thread.currentThread().setContextClassLoader( cl );
     }
@@ -241,17 +272,25 @@ public class CommonHadoopShim implements HadoopShim {
   }
 
   @Override
+  public Class<? extends Writable> getNamedHadoopWritableClass( String className ) throws ClassNotFoundException {
+    return TypeConverterFactory.getNamedWritable( className );
+  }
+
+  @Override
   public Class<?> getPentahoMapReduceCombinerClass() {
-    return GenericTransCombiner.class;
+    return PentahoMapreduceGenericTransCombiner.class;
+    // return GenericTransCombine.class;
   }
 
   @Override
   public Class<?> getPentahoMapReduceReducerClass() {
-    return GenericTransReduce.class;
+    return PentahoMapreduceGenericTransReducer.class;
+    // return GenericTransReduce.class;
   }
 
   @Override
   public Class<?> getPentahoMapReduceMapRunnerClass() {
-    return PentahoMapRunnable.class;
+    return PentahoMapreduceGenericTransMapper.class;
+    // return PentahoMapRunnable.class;
   }
 }
