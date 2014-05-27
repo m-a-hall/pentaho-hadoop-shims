@@ -22,13 +22,11 @@
 
 package org.pentaho.hadoop.mapreduce;
 
-import org.apache.hadoop.io.Writable;
-import org.apache.hadoop.io.WritableComparable;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.hadoop.mapreduce.PentahoMapreduceHelper.MROperations;
 
-public class PentahoMapreduceGenericTransCombiner<K extends WritableComparable<?>, V extends Iterable<Writable>, K2, V2>
-    extends PentahoMapreduceGenericTransReducer<K, V, K2, V2> {
+public class PentahoMapreduceGenericTransCombiner<K, V, K2, V2> extends
+    PentahoMapreduceGenericTransReducer<K, V, K2, V2> {
 
   public PentahoMapreduceGenericTransCombiner() throws KettleException {
     super();
