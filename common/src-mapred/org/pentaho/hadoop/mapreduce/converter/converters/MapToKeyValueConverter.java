@@ -22,56 +22,63 @@
 
 package org.pentaho.hadoop.mapreduce.converter.converters;
 
+import java.util.HashMap;
+
 import org.apache.hadoop.hbase.HConstants;
 import org.apache.hadoop.hbase.KeyValue;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.hadoop.mapreduce.converter.TypeConversionException;
 import org.pentaho.hadoop.mapreduce.converter.spi.ITypeConverter;
-import org.pentaho.hbase.shim.api.KeyValueHolder;
+import org.pentaho.hbase.shim.api.KeyValueHelper;
 
 /**
- * Converter for converting KeyValueHolder to the writable type KeyValue
+ * Converter for converting a HashMap (holding KeyValue byte array payload bits) to the writable type KeyValue
  * 
  * @author Mark Hall (mhall{[at]}pentaho{[dot]}com)
- * 
  */
-public class KeyValueHolderToKeyValueConverter implements ITypeConverter<KeyValueHolder, KeyValue> {
+public class MapToKeyValueConverter implements ITypeConverter<HashMap<String, Object>, KeyValue> {
 
   @Override
   public boolean canConvert( Class from, Class to ) {
-    return ( KeyValueHolder.class.equals( from ) && KeyValue.class.equals( to ) );
+    return ( HashMap.class.equals( from ) && KeyValue.class.equals( to ) );
   }
 
   @Override
-  public KeyValue convert( ValueMetaInterface meta, KeyValueHolder obj ) throws TypeConversionException {
+  public KeyValue convert( ValueMetaInterface meta, HashMap<String, Object> obj ) throws TypeConversionException {
 
-    Long timestamp = obj.getTimestamp();
+    byte[] key = KeyValueHelper.getKey( obj );
+    byte[] colFam = KeyValueHelper.getColumnFamily( obj );
+    byte[] qualifier = KeyValueHelper.getQualifier( obj );
+    byte[] value = KeyValueHelper.getValue( obj );
+    Long timestamp = KeyValueHelper.getTimestamp( obj );
+    Integer type = KeyValueHelper.getType( obj );
+
     KeyValue.Type t = KeyValue.Type.Put;
-    switch ( obj.getType() ) {
-      case Minimum:
+    switch ( type.intValue() ) {
+      case KeyValueHelper.MINIMUM:
         t = KeyValue.Type.Minimum;
         break;
-      case Put:
+      case KeyValueHelper.PUT:
         t = KeyValue.Type.Put;
         break;
-      case Delete:
+      case KeyValueHelper.DELETE:
         t = KeyValue.Type.Delete;
         break;
-      case DeleteColumn:
+      case KeyValueHelper.DELETECOLUMN:
         t = KeyValue.Type.DeleteColumn;
         break;
-      case DeleteFamliy:
+      case KeyValueHelper.DELETEFAMILY:
         t = KeyValue.Type.DeleteFamily;
         break;
-      case Maximum:
+      case KeyValueHelper.MAXIMUM:
         t = KeyValue.Type.Maximum;
         break;
       default:
         t = KeyValue.Type.Put;
     }
     KeyValue kv =
-        new KeyValue( obj.getKey(), obj.getColumnFamily(), obj.getQualifier(), ( timestamp == null
-            ? HConstants.LATEST_TIMESTAMP : timestamp.longValue() ), t, obj.getValue() );
+        new KeyValue( key, colFam, qualifier,
+            ( timestamp == null ? HConstants.LATEST_TIMESTAMP : timestamp.longValue() ), t, value );
     return kv;
   }
 }

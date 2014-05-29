@@ -178,7 +178,7 @@ public class TypeConverterFactory {
    */
   @SuppressWarnings( "unchecked" )
   public static Class<? extends Writable> getNamedWritable( String writableClass ) throws ClassNotFoundException {
-    return (Class<? extends Writable>) Class.forName( writableClass );
+    return (Class<? extends Writable>) Class.forName( writableClass, true, TypeConverterFactory.class.getClassLoader() );
   }
 
   /**
