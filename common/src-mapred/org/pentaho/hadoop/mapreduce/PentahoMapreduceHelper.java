@@ -250,7 +250,7 @@ public class PentahoMapreduceHelper<K, V> {
   protected boolean reduceSingleThreaded;
 
   public void setup( TaskInputOutputContext context ) {
-    debug = context.getConfiguration().get( "debug" ).equals( "true" );
+    debug = context.getConfiguration().get( "debug", "false" ).equals( "true" );
 
     transMapXml = context.getConfiguration().get( "transformation-map-xml" );
     transCombinerXml = context.getConfiguration().get( "transformation-combiner-xml" );
