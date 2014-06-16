@@ -114,12 +114,15 @@ public class PentahoMapreduceHelper<K, V> {
           ITypeConverter converter =
               typeConverterFactory.getConverter( row[outOrdinals.getKeyOrdinal()] == null ? null : row[outOrdinals
                   .getKeyOrdinal()].getClass(), outClassK );
-          PentahoMapreduceHelper.setDebugStatus( context, "ordinals key: " + outOrdinals.getKeyOrdinal(), debug );
-          PentahoMapreduceHelper.setDebugStatus( context, "rowMeta: " + rowMeta, debug );
-          PentahoMapreduceHelper.setDebugStatus( context, "rowMeta: " + rowMeta.getMetaXML(), debug );
-          PentahoMapreduceHelper.setDebugStatus( context,
-              "meta: " + rowMeta.getValueMeta( outOrdinals.getKeyOrdinal() ), debug );
-          PentahoMapreduceHelper.setDebugStatus( context, "key: " + row[outOrdinals.getKeyOrdinal()], debug );
+
+          if ( debug ) {
+            PentahoMapreduceHelper.setDebugStatus( context, "ordinals key: " + outOrdinals.getKeyOrdinal(), debug );
+            PentahoMapreduceHelper.setDebugStatus( context, "rowMeta: " + rowMeta, debug );
+            PentahoMapreduceHelper.setDebugStatus( context, "rowMeta: " + rowMeta.getMetaXML(), debug );
+            PentahoMapreduceHelper.setDebugStatus( context, "meta: "
+                + rowMeta.getValueMeta( outOrdinals.getKeyOrdinal() ), debug );
+            PentahoMapreduceHelper.setDebugStatus( context, "key: " + row[outOrdinals.getKeyOrdinal()], debug );
+          }
           Object outKey =
               converter.convert( rowMeta.getValueMeta( outOrdinals.getKeyOrdinal() ), row[outOrdinals.getKeyOrdinal()] );
 
@@ -131,12 +134,15 @@ public class PentahoMapreduceHelper<K, V> {
           ITypeConverter valueConverter =
               typeConverterFactory.getConverter( row[outOrdinals.getValueOrdinal()] == null ? null : row[outOrdinals
                   .getValueOrdinal()].getClass(), outClassV );
-          PentahoMapreduceHelper.setDebugStatus( context, "ordinals value: " + outOrdinals.getValueOrdinal(), debug );
-          PentahoMapreduceHelper.setDebugStatus( context, "rowMeta: " + rowMeta, debug );
-          PentahoMapreduceHelper.setDebugStatus( context, "rowMeta: " + rowMeta.getMetaXML(), debug );
-          PentahoMapreduceHelper.setDebugStatus( context, "meta: "
-              + rowMeta.getValueMeta( outOrdinals.getValueOrdinal() ), debug );
-          PentahoMapreduceHelper.setDebugStatus( context, "value: " + row[outOrdinals.getValueOrdinal()], debug );
+
+          if ( debug ) {
+            PentahoMapreduceHelper.setDebugStatus( context, "ordinals value: " + outOrdinals.getValueOrdinal(), debug );
+            PentahoMapreduceHelper.setDebugStatus( context, "rowMeta: " + rowMeta, debug );
+            PentahoMapreduceHelper.setDebugStatus( context, "rowMeta: " + rowMeta.getMetaXML(), debug );
+            PentahoMapreduceHelper.setDebugStatus( context, "meta: "
+                + rowMeta.getValueMeta( outOrdinals.getValueOrdinal() ), debug );
+            PentahoMapreduceHelper.setDebugStatus( context, "value: " + row[outOrdinals.getValueOrdinal()], debug );
+          }
           Object outVal =
               valueConverter.convert( rowMeta.getValueMeta( outOrdinals.getValueOrdinal() ), row[outOrdinals
                   .getValueOrdinal()] );
